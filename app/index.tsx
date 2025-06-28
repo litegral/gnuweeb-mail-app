@@ -1,13 +1,11 @@
-import { View } from "react-native";
-import { Button } from "~/components/ui/button";
-import { Text } from "~/components/ui/text";
+import { router } from "expo-router";
+import { useEffect } from "react";
 
 export default function Index() {
-  return (
-    <View className="flex-1 items-center justify-center">
-      <Button>
-        <Text>Welcome!</Text>
-      </Button>
-    </View>
-  );
+  useEffect(() => {
+    // Redirect to login screen on app start
+    router.replace("/(auth)/login");
+  }, []);
+
+  return null;
 }
