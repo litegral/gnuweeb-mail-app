@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "gnuweeb-mail-app",
+    "name": "Gnuweeb Mail App",
     "slug": "gnuweeb-mail-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "org.gnuweeb.mailapp"
     },
     "web": {
       "bundler": "metro",
