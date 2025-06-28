@@ -1,15 +1,13 @@
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Button } from "~/components/ui/button";
+import { Text } from "~/components/ui/text";
 
 export default function Index() {
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Welcome!</Text>
+    <View className="flex-1 items-center justify-center">
+      <Button>
+        <Text>Welcome!</Text>
+      </Button>
     </View>
   );
 }
