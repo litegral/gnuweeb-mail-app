@@ -47,6 +47,38 @@ export interface RefreshUserInfoResponse {
     };
 }
 
+export interface UpdateUserInfoRequest {
+    full_name: string;
+    ext_email: string;
+    gender: string;
+    password: string;
+    'socials[github_username]': string;
+    'socials[telegram_username]': string;
+    'socials[twitter_username]': string;
+    'socials[discord_username]': string;
+    photo?: any; // For file upload
+}
+
+export interface UpdateUserInfoResponse {
+    code: number;
+    res: {
+        msg: string;
+    };
+}
+
+export interface ChangePasswordRequest {
+    cur_pass: string;
+    new_pass: string;
+    retype_new_pass: string;
+}
+
+export interface ChangePasswordResponse {
+    code: number;
+    res: {
+        msg: string;
+    };
+}
+
 export interface ApiError {
     code: number;
     message: string;
@@ -144,6 +176,54 @@ export class ApiService {
         }
         
         return response;
+    }
+    
+    // Change password method
+    public async changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+        return await this.makeRequest<ChangePasswordResponse>('change_password&renew_token=1', data);
+    }
+    
+    // Update user info method
+    public async updateUserInfo(data: UpdateUserInfoRequest): Promise<UpdateUserInfoResponse> {
+        const url = `${API_CONFIG.BASE_URL}?action=set_user_info&renew_token=1`;
+        
+        const formData = new FormData();
+        
+        // Add all text fields to form data
+        Object.entries(data).forEach(([key, value]) => {
+            if (key === 'photo' && value) {
+                // Handle photo upload
+                formData.append('photo', value);
+            } else if (value !== undefined && value !== '') {
+                formData.append(key, value.toString());
+            }
+        });
+        
+        const headers: Record<string, string> = {};
+        
+        // Add authorization header if token exists
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: formData,
+            });
+            
+            const result = await response.json();
+            
+            // Check if the response indicates an error
+            if (result.code && result.code !== 200) {
+                throw new Error(result.res?.msg || 'An error occurred');
+            }
+            
+            return result as UpdateUserInfoResponse;
+        } catch (error) {
+            throw error;
+        }
     }
     
     // Logout method

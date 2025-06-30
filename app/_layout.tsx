@@ -1,6 +1,7 @@
 import './global.css';
 
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native';
+import { PortalHost } from '@rn-primitives/portal';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
@@ -8,7 +9,6 @@ import { Platform } from 'react-native';
 import { NAV_THEME } from '~/constants/colors';
 import { useColorScheme } from '~/hooks/useColorScheme';
 import { AuthProvider } from '~/services/auth-context';
-import { PortalHost } from '@rn-primitives/portal';
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -58,6 +58,22 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen 
+            name="edit-profile" 
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }} 
+          />
+          <Stack.Screen 
+            name="change-password" 
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }} 
+          />
         </Stack>
         <PortalHost />
       </ThemeProvider>

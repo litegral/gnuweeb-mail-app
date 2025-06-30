@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { apiService, UserInfo } from './api';
+import { apiService, ChangePasswordRequest, UpdateUserInfoRequest, UserInfo } from './api';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -10,6 +10,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (data: UpdateUserInfoRequest) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,6 +111,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUser = async (data: UpdateUserInfoRequest) => {
+    try {
+      await apiService.updateUserInfo(data);
+      // Refresh user data after successful update
+      await refreshUser();
+    } catch (error) {
+      console.error('Update user error:', error);
+      throw error;
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
+    try {
+      const data: ChangePasswordRequest = {
+        cur_pass: currentPassword,
+        new_pass: newPassword,
+        retype_new_pass: confirmPassword,
+      };
+      
+      await apiService.changePassword(data);
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -117,6 +144,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     refreshUser,
+    updateUser,
+    changePassword,
   };
 
   return (
