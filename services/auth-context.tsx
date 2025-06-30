@@ -1,0 +1,113 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { apiService, UserInfo } from './api';
+
+interface AuthContextType {
+  user: UserInfo | null;
+  token: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'user_info';
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load stored authentication data on app start
+  useEffect(() => {
+    loadStoredAuth();
+  }, []);
+
+  const loadStoredAuth = async () => {
+    try {
+      const [storedToken, storedUser] = await Promise.all([
+        AsyncStorage.getItem(TOKEN_KEY),
+        AsyncStorage.getItem(USER_KEY),
+      ]);
+
+      if (storedToken && storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+        apiService.setToken(storedToken);
+      }
+    } catch (error) {
+        console.error('Error loading stored auth:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await apiService.login({
+        user: email,
+        pass: password,
+      });
+
+      const { token: newToken, user_info } = response.res;
+
+      // Store authentication data
+      await Promise.all([
+        AsyncStorage.setItem(TOKEN_KEY, newToken),
+        AsyncStorage.setItem(USER_KEY, JSON.stringify(user_info)),
+      ]);
+
+      setToken(newToken);
+      setUser(user_info);
+      apiService.setToken(newToken);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await apiService.logout();
+      
+      // Clear stored data
+      await Promise.all([
+        AsyncStorage.removeItem(TOKEN_KEY),
+        AsyncStorage.removeItem(USER_KEY),
+      ]);
+
+      setToken(null);
+      setUser(null);
+      apiService.clearToken();
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const value: AuthContextType = {
+    user,
+    token,
+    isLoading,
+    isAuthenticated: !!token && !!user,
+    login,
+    logout,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+} 
