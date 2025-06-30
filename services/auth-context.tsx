@@ -9,6 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,6 +89,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await apiService.refreshUserInfo();
+      const { user_info, renew_token } = response.res;
+
+      // Store updated authentication data
+      await Promise.all([
+        AsyncStorage.setItem(TOKEN_KEY, renew_token.token),
+        AsyncStorage.setItem(USER_KEY, JSON.stringify(user_info)),
+      ]);
+
+      setToken(renew_token.token);
+      setUser(user_info);
+      apiService.setToken(renew_token.token);
+    } catch (error) {
+      console.error('Refresh user error:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -95,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!token && !!user,
     login,
     logout,
+    refreshUser,
   };
 
   return (

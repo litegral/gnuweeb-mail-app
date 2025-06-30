@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import React from 'react';
-import { Alert, SafeAreaView, ScrollView, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
@@ -8,7 +8,8 @@ import { Text } from '~/components/ui/text';
 import { useAuth } from '~/services/auth-context';
 
 export default function AccountScreen() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, refreshUser } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -35,6 +36,19 @@ export default function AccountScreen() {
     );
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshUser();
+      Alert.alert('Success', 'Profile information updated successfully!');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh profile information';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   if (!isAuthenticated || !user) {
     return (
       <SafeAreaView className="flex-1 bg-background">
@@ -49,7 +63,18 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <ScrollView className="flex-1" contentContainerClassName="p-6">
+      <ScrollView 
+        className="flex-1" 
+        contentContainerClassName="p-6"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#3b82f6']} // Android
+            tintColor={'#3b82f6'} // iOS
+          />
+        }
+      >
         <View className="space-y-6">
           {/* Header */}
           <View className="items-center pb-4">

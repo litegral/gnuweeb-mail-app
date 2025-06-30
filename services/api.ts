@@ -35,6 +35,18 @@ export interface LoginResponse {
     };
 }
 
+export interface RefreshUserInfoResponse {
+    code: number;
+    res: {
+        msg: string;
+        user_info: UserInfo;
+        renew_token: {
+            token: string;
+            token_exp_at: number;
+        };
+    };
+}
+
 export interface ApiError {
     code: number;
     message: string;
@@ -117,6 +129,18 @@ export class ApiService {
         // Store the token for future requests
         if (response.res?.token) {
             this.setToken(response.res.token);
+        }
+        
+        return response;
+    }
+    
+    // Refresh user info and token method
+    public async refreshUserInfo(): Promise<RefreshUserInfoResponse> {
+        const response = await this.makeRequest<RefreshUserInfoResponse>('get_user_info&renew_token=1', undefined, 'GET');
+        
+        // Update the token for future requests
+        if (response.res?.renew_token?.token) {
+            this.setToken(response.res.renew_token.token);
         }
         
         return response;
