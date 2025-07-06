@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PasswordInput } from '~/components/PasswordInput';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
-import { Eye } from '~/lib/icons/Eye';
-import { EyeOff } from '~/lib/icons/EyeOff';
 import { useAuth } from '~/services/auth-context';
 
 export default function LoginScreen() {
@@ -14,9 +14,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   
   const { login } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -46,19 +46,16 @@ export default function LoginScreen() {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-background">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
+        keyboardVerticalOffset={insets.top}
+        style={{ flex: 1 }}
       >
         <ScrollView
           className="flex-1"
-          contentContainerClassName="flex-1 justify-center px-6"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 }}
           keyboardShouldPersistTaps="handled"
         >
           <View className="w-full max-w-sm mx-auto">
@@ -108,31 +105,16 @@ export default function LoginScreen() {
                   <Text className="text-sm font-medium text-foreground">
                     Password
                   </Text>
-                  <View className="relative">
-                    <Input
-                      placeholder="password"
-                      value={password}
-                      onChangeText={(text) => {
-                        setPassword(text);
-                        if (error) setError(''); // Clear error when user starts typing
-                      }}
-                      secureTextEntry={!showPassword}
-                      autoComplete="current-password"
-                      editable={!isLoading}
-                      className="pr-12"
-                    />
-                    <TouchableOpacity
-                      onPress={togglePasswordVisibility}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                      disabled={isLoading}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5 text-muted-foreground" />
-                      ) : (
-                        <Eye className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </TouchableOpacity>
-                  </View>
+                  <PasswordInput
+                    placeholder="password"
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      if (error) setError(''); // Clear error when user starts typing
+                    }}
+                    autoComplete="current-password"
+                    editable={!isLoading}
+                  />
                 </View>
 
                 <Button

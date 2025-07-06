@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PasswordInput } from '~/components/PasswordInput';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { useAuth } from '~/services/auth-context';
 
@@ -131,11 +131,10 @@ export default function ChangePasswordScreen() {
                   <Text className="text-sm font-medium text-foreground">
                     Current Password *
                   </Text>
-                  <Input
+                  <PasswordInput
                     value={formData.currentPassword}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, currentPassword: text }))}
                     placeholder="Enter your current password"
-                    secureTextEntry
                   />
                 </View>
 
@@ -143,11 +142,10 @@ export default function ChangePasswordScreen() {
                   <Text className="text-sm font-medium text-foreground">
                     New Password *
                   </Text>
-                  <Input
+                  <PasswordInput
                     value={formData.newPassword}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, newPassword: text }))}
                     placeholder="Enter your new password"
-                    secureTextEntry
                   />
                   <Text className="text-xs text-muted-foreground mt-1">
                     Password must be at least 6 characters long
@@ -158,11 +156,10 @@ export default function ChangePasswordScreen() {
                   <Text className="text-sm font-medium text-foreground">
                     Confirm New Password *
                   </Text>
-                  <Input
+                  <PasswordInput
                     value={formData.confirmPassword}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, confirmPassword: text }))}
                     placeholder="Confirm your new password"
-                    secureTextEntry
                   />
                 </View>
               </CardContent>

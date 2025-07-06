@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PasswordInput } from '~/components/PasswordInput';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
@@ -249,11 +250,10 @@ export default function EditProfileScreen() {
                   <Text className="text-sm font-medium text-foreground">
                     Password *
                   </Text>
-                  <Input
+                  <PasswordInput
                     value={formData.password}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
                     placeholder="Enter current password"
-                    secureTextEntry
                   />
                 </View>
               </CardContent>
