@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PasswordInput } from '~/components/PasswordInput';
 import { Button } from '~/components/ui/button';
@@ -11,15 +11,46 @@ import { useAuth } from '~/services/auth-context';
 export default function ChangePasswordScreen() {
   const { user, changePassword } = useAuth();
   const [isChanging, setIsChanging] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const insets = useSafeAreaInsets();
+  const scrollViewRef = React.useRef<ScrollView>(null);
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
+  // Handle keyboard visibility for Android
+  React.useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardVisible(true);
+      // Auto-scroll to focused input on Android
+      if (Platform.OS === 'android') {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
+
   const handleCancel = () => {
     router.back();
+  };
+
+  const handleInputFocus = () => {
+    if (Platform.OS === 'android' && keyboardVisible) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -82,13 +113,22 @@ export default function ChangePasswordScreen() {
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={Platform.OS === 'android' ? { flex: 1 } : undefined}
         className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
           contentContainerClassName="px-4 py-6"
+          contentContainerStyle={{
+            paddingBottom: Platform.OS === 'android' && keyboardVisible ? 300 : 24,
+          }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          keyboardDismissMode="interactive"
         >
           <View className="space-y-8">
             {/* Header */}
@@ -126,8 +166,8 @@ export default function ChangePasswordScreen() {
               <CardHeader>
                 <CardTitle>Password Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <View className="space-y-1.5">
+              <CardContent className="gap-6">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Current Password *
                   </Text>
@@ -135,10 +175,11 @@ export default function ChangePasswordScreen() {
                     value={formData.currentPassword}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, currentPassword: text }))}
                     placeholder="Enter your current password"
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-1.5">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     New Password *
                   </Text>
@@ -146,13 +187,14 @@ export default function ChangePasswordScreen() {
                     value={formData.newPassword}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, newPassword: text }))}
                     placeholder="Enter your new password"
+                    onFocus={handleInputFocus}
                   />
                   <Text className="text-xs text-muted-foreground mt-1">
                     Password must be at least 6 characters long
                   </Text>
                 </View>
 
-                <View className="space-y-1.5">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Confirm New Password *
                   </Text>
@@ -160,6 +202,7 @@ export default function ChangePasswordScreen() {
                     value={formData.confirmPassword}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, confirmPassword: text }))}
                     placeholder="Confirm your new password"
+                    onFocus={handleInputFocus}
                   />
                 </View>
               </CardContent>

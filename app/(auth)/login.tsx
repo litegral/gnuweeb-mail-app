@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PasswordInput } from '~/components/PasswordInput';
 import { Button } from '~/components/ui/button';
@@ -14,9 +14,32 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   
   const { login } = useAuth();
   const insets = useSafeAreaInsets();
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // Handle keyboard visibility for Android
+  React.useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardVisible(true);
+      // Auto-scroll to focused input on Android
+      if (Platform.OS === 'android') {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -46,17 +69,34 @@ export default function LoginScreen() {
     }
   };
 
+  const handleInputFocus = () => {
+    if (Platform.OS === 'android' && keyboardVisible) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={insets.top}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 }}
+          contentContainerStyle={{ 
+            flexGrow: 1, 
+            justifyContent: 'center', 
+            paddingHorizontal: 24,
+            paddingBottom: Platform.OS === 'android' && keyboardVisible ? 200 : 24,
+          }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          keyboardDismissMode="interactive"
         >
           <View className="w-full max-w-sm mx-auto">
             {/* Logo/Title Section */}
@@ -74,7 +114,7 @@ export default function LoginScreen() {
               <CardHeader>
                 <CardTitle>Sign In</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="gap-5">
                 {/* {error ? (
                   <View className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
                     <Text className="text-destructive text-sm text-center">
@@ -83,7 +123,7 @@ export default function LoginScreen() {
                   </View>
                 ) : null} */}
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Username or Email
                   </Text>
@@ -98,10 +138,11 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     autoComplete="email"
                     editable={!isLoading}
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Password
                   </Text>
@@ -114,6 +155,7 @@ export default function LoginScreen() {
                     }}
                     autoComplete="current-password"
                     editable={!isLoading}
+                    onFocus={handleInputFocus}
                   />
                 </View>
 

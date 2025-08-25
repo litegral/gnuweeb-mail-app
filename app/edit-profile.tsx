@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PasswordInput } from '~/components/PasswordInput';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
@@ -15,7 +15,30 @@ import { useAuth } from '~/services/auth-context';
 export default function EditProfileScreen() {
   const { user, updateUser } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const insets = useSafeAreaInsets();
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // Handle keyboard visibility for Android
+  React.useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event) => {
+      setKeyboardVisible(true);
+      // Auto-scroll to focused input on Android
+      if (Platform.OS === 'android') {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -122,6 +145,14 @@ export default function EditProfileScreen() {
     router.back();
   };
 
+  const handleInputFocus = () => {
+    if (Platform.OS === 'android' && keyboardVisible) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
   if (!user) {
     return (
       <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
@@ -137,13 +168,22 @@ export default function EditProfileScreen() {
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={Platform.OS === 'android' ? { flex: 1 } : undefined}
         className="flex-1"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
           contentContainerClassName="px-4 py-6"
+          contentContainerStyle={{
+            paddingBottom: Platform.OS === 'android' && keyboardVisible ? 300 : 24,
+          }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+          keyboardDismissMode="interactive"
         >
           <View className="space-y-8">
             {/* Header */}
@@ -196,8 +236,8 @@ export default function EditProfileScreen() {
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <View className="space-y-2">
+              <CardContent className="gap-5">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Full Name *
                   </Text>
@@ -205,10 +245,11 @@ export default function EditProfileScreen() {
                     value={formData.full_name}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, full_name: text }))}
                     placeholder="Full Name"
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Email *
                   </Text>
@@ -217,10 +258,11 @@ export default function EditProfileScreen() {
                     onChangeText={(text) => setFormData(prev => ({ ...prev, ext_email: text }))}
                     placeholder="Email"
                     keyboardType="email-address"
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Gender
                   </Text>
@@ -246,7 +288,7 @@ export default function EditProfileScreen() {
                   </Select>
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Password *
                   </Text>
@@ -254,6 +296,7 @@ export default function EditProfileScreen() {
                     value={formData.password}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
                     placeholder="Enter current password"
+                    onFocus={handleInputFocus}
                   />
                 </View>
               </CardContent>
@@ -264,8 +307,8 @@ export default function EditProfileScreen() {
               <CardHeader>
                 <CardTitle>Social Links</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <View className="space-y-2">
+              <CardContent className="gap-5">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     GitHub
                   </Text>
@@ -273,10 +316,11 @@ export default function EditProfileScreen() {
                     value={formData.github_username}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, github_username: text }))}
                     placeholder="GitHub username"
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Telegram
                   </Text>
@@ -284,10 +328,11 @@ export default function EditProfileScreen() {
                     value={formData.telegram_username}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, telegram_username: text }))}
                     placeholder="Telegram username"
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Twitter
                   </Text>
@@ -295,10 +340,11 @@ export default function EditProfileScreen() {
                     value={formData.twitter_username}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, twitter_username: text }))}
                     placeholder="Twitter username"
+                    onFocus={handleInputFocus}
                   />
                 </View>
 
-                <View className="space-y-2">
+                <View className="gap-5">
                   <Text className="text-sm font-medium text-foreground">
                     Discord
                   </Text>
@@ -306,6 +352,7 @@ export default function EditProfileScreen() {
                     value={formData.discord_username}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, discord_username: text }))}
                     placeholder="Discord username"
+                    onFocus={handleInputFocus}
                   />
                 </View>
               </CardContent>
